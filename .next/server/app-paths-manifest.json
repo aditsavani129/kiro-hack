@@ -1,4 +1,5 @@
 {
+  "/createProject/[projectId]/page": "app/createProject/[projectId]/page.js",
   "/createProject/page": "app/createProject/page.js",
   "/dashboard/page": "app/dashboard/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
