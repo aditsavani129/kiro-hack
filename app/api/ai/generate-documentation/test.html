@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Documentation Generator Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+    }
+    .container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button {
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #4338ca;
+    }
+    button:disabled {
+      background-color: #a5a5a5;
+      cursor: not-allowed;
+    }
+    pre {
+      background-color: #f0f0f0;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      max-height: 300px;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+    .error {
+      background-color: #fee2e2;
+      color: #b91c1c;
+    }
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>PDF Documentation Generator Test</h1>
+    
+    <p>This page tests the PDF documentation generation API endpoint.</p>
+    
+    <button id="testButton" onclick="testGenerateDocumentation()">Generate Test PDF</button>
+    
+    <div id="status" class="status" style="display: none;"></div>
+    
+    <h3>Response:</h3>
+    <pre id="response">No response yet</pre>
+  </div>
+
+  <script>
+    async function testGenerateDocumentation() {
+      const button = document.getElementById('testButton');
+      const statusDiv = document.getElementById('status');
+      const responseDiv = document.getElementById('response');
+      
+      // Disable button and show loading state
+      button.disabled = true;
+      button.innerHTML = '<span class="loading"></span>Generating...';
+      statusDiv.style.display = 'none';
+      
+      // Mock project data
+      const mockProjectData = {
+        projectName: "Task Flow",
+        projectDescription: "A project management tool for teams to track tasks and collaborate efficiently.",
+        techStack: "nextjs-convex",
+        features: [
+          {
+            id: "feature1",
+            title: "Task Creation",
+            description: "Users can create new tasks with title, description, due date, and priority.",
+            priority: "High",
+            effort: "Medium",
+            category: "Core",
+            implementationDetails: "Implement using React components with Convex backend for data storage."
+          },
+          {
+            id: "feature2",
+            title: "Task Assignment",
+            description: "Users can assign tasks to team members.",
+            priority: "Medium",
+            effort: "Small",
+            category: "Core",
+            implementationDetails: "Add user selection dropdown in task creation/edit forms."
+          }
+        ],
+        summary: "Task Flow is a modern project management application built to help teams collaborate efficiently."
+      };
+      
+      try {
+        // Call the API endpoint
+        const response = await fetch('/api/ai/generate-documentation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(mockProjectData),
+        });
+        
+        // Parse the response
+        const data = await response.json();
+        
+        if (response.ok) {
+          // Show success message
+          statusDiv.className = 'status success';
+          statusDiv.textContent = '✅ PDF generated successfully!';
+          statusDiv.style.display = 'block';
+          
+          // Display response data
+          responseDiv.textContent = JSON.stringify({
+            documentationLength: data.documentation?.length || 0,
+            pdfBase64Length: data.pdfBase64?.length || 0,
+            documentationPreview: data.documentation?.substring(0, 200) + '...'
+          }, null, 2);
+          
+          // Download the PDF
+          if (data.pdfBase64) {
+            const pdfBlob = new Blob([Uint8Array.from(atob(data.pdfBase64), c => c.charCodeAt(0))], { type: 'application/pdf' });
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            
+            const a = document.createElement('a');
+            a.href = pdfUrl;
+            a.download = 'test-documentation.pdf';
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            document.body.removeChild(a);
+            URL.revokeObjectURL(pdfUrl);
+          }
+        } else {
+          // Show error message
+          statusDiv.className = 'status error';
+          statusDiv.textContent = '❌ Error: ' + (data.error || 'Unknown error');
+          statusDiv.style.display = 'block';
+          
+          // Display error data
+          responseDiv.textContent = JSON.stringify(data, null, 2);
+        }
+      } catch (error) {
+        // Show error message
+        statusDiv.className = 'status error';
+        statusDiv.textContent = '❌ Error: ' + error.message;
+        statusDiv.style.display = 'block';
+        
+        // Display error
+        responseDiv.textContent = error.toString();
+      } finally {
+        // Reset button state
+        button.disabled = false;
+        button.textContent = 'Generate Test PDF';
+      }
+    }
+  </script>
+</body>
+</html>
